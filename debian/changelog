@@ -1,4 +1,4 @@
-quantum (1:2013.1.2-0ubuntu1mido0) precise-grizzly; urgency=low
+quantum (1:2013.1.2.mido0-0ubuntu1.mido0) precise-grizzly; urgency=low
 
   * Change the version from cloud to mido. 
 
