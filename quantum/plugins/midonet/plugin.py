@@ -559,8 +559,9 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         if dh.get_mac_addr() == mac and dh.get_ip_addr() == ip:
                             dh.delete()
 
+            result = super(MidonetPluginV2, self).delete_port(context, id)
             self.mido_api.get_port(id).delete()
-            return super(MidonetPluginV2, self).delete_port(context, id)
+            return result
 
     #
     # L3 APIs.
