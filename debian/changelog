@@ -1,3 +1,13 @@
+quantum (1:2013.1.2.mido1-0ubuntu1.mido0) precise-grizzly; urgency=low
+
+  * Bug fixes for MidoNet plugin
+    - [c62779604d] Wrap a midonet port deletion under transaction
+    - [c603aaadce] Wrap delete operations for router in a transaction
+    - [8e684fe832] Wrap delete operations for subnet in transation 
+    - [5ef534ff2d] MD server support using DHCP agent and MD Proxy
+
+ -- Ryu Ishimoto <ryu@midokura.com>  Fri, 19 Jul 2013 07:26:17 +0900
+
 quantum (1:2013.1.2.mido0-0ubuntu1.mido0) precise-grizzly; urgency=low
 
   * Change the version from cloud to mido. 
