@@ -265,45 +265,50 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         Delete quantum network and its corresponding MidoNet bridge.
         """
         LOG.debug(_("MidonetPluginV2.delete_subnet called: id=%s"), id)
-        subnet = super(MidonetPluginV2, self).get_subnet(context, id,
-                                                         fields=None)
-        net = super(MidonetPluginV2, self).get_network(context,
-                                                       subnet['network_id'],
-                                                       fields=None)
-        bridge_id = subnet['network_id']
-        try:
-            bridge = self.mido_api.get_bridge(bridge_id)
-        except w_exc.HTTPNotFound:
-            raise MidonetResourceNotFound(resource_type='Bridge', id=bridge_id)
 
-        dhcp = bridge.get_dhcp_subnets()
-        dhcp[0].delete()
+        session = context.session
+        with session.begin(subtransactions=True):
 
-        # If the network is external, clean up routes, links, ports.
-        self._extend_network_dict_l3(context, net)
-        if net['router:external']:
-            # Delete routes and unlink the router and the bridge.
-            routes = self.provider_router.get_routes()
-
-            bridge_ports_to_delete = []
-            for p in self.provider_router.get_peer_ports():
-                if p.get_device_id() == bridge.get_id():
-                    bridge_ports_to_delete.append(p)
-
-            for p in bridge.get_peer_ports():
-                if p.get_device_id() == self.provider_router.get_id():
-                    # delete the routes going to the brdge
-                    for r in routes:
-                        if r.get_next_hop_port() == p.get_id():
-                            r.delete()
-                    p.unlink()
-                    p.delete()
-
-            # delete bridge port
-            map(lambda x: x.delete(), bridge_ports_to_delete)
-
-        super(MidonetPluginV2, self).delete_subnet(context, id)
+            subnet = super(MidonetPluginV2, self).get_subnet(context, id,
+                                                             fields=None)
+            net = super(MidonetPluginV2, self).get_network(context,
+                                                           subnet['network_id'],
+                                                           fields=None)
+            ret = super(MidonetPluginV2, self).delete_subnet(context, id)
+            bridge_id = subnet['network_id']
+            try:
+                bridge = self.mido_api.get_bridge(bridge_id)
+            except w_exc.HTTPNotFound:
+                raise MidonetResourceNotFound(resource_type='Bridge', id=bridge_id)
+    
+            dhcp = bridge.get_dhcp_subnets()
+            dhcp[0].delete()
+    
+            # If the network is external, clean up routes, links, ports.
+            self._extend_network_dict_l3(context, net)
+            if net['router:external']:
+                # Delete routes and unlink the router and the bridge.
+                routes = self.provider_router.get_routes()
+    
+                bridge_ports_to_delete = []
+                for p in self.provider_router.get_peer_ports():
+                    if p.get_device_id() == bridge.get_id():
+                        bridge_ports_to_delete.append(p)
+    
+                for p in bridge.get_peer_ports():
+                    if p.get_device_id() == self.provider_router.get_id():
+                        # delete the routes going to the brdge
+                        for r in routes:
+                            if r.get_next_hop_port() == p.get_id():
+                                r.delete()
+                        p.unlink()
+                        p.delete()
+    
+                # delete bridge port
+                map(lambda x: x.delete(), bridge_ports_to_delete)
+    
         LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
+        return ret
 
     def create_network(self, context, network):
         """Create Quantum network.
