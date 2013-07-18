@@ -735,19 +735,22 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         mrouter = self.mido_api.get_router(id)
         tenant_id = mrouter.get_tenant_id()
 
-        # delete corresponding chains
-        chains = self.chain_manager.get_router_chains(tenant_id,
-                                                      mrouter.get_id())
-        chains['in'].delete()
-        chains['out'].delete()
+        session = context.session
+        with session.begin(subtransactions=True):
+            result = super(MidonetPluginV2, self).delete_router(context, id)
 
-        # delete the router
-        mrouter.delete()
-
-        result = super(MidonetPluginV2, self).delete_router(context, id)
-        LOG.debug(_("MidonetPluginV2.delete_router exiting: result=%s"),
-                  result)
-        return result
+            # delete corresponding chains
+            chains = self.chain_manager.get_router_chains(tenant_id,
+                                                          mrouter.get_id())
+            chains['in'].delete()
+            chains['out'].delete()
+    
+            # delete the router
+            mrouter.delete()
+    
+            LOG.debug(_("MidonetPluginV2.delete_router exiting: result=%s"),
+                      result)
+            return result
 
     def get_router(self, context, id, fields=None):
         LOG.debug(_("MidonetPluginV2.get_router called: id=%(id)s "
