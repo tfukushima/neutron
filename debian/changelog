@@ -1,3 +1,9 @@
+quantum (1:2013.1.2.mido2-0ubuntu1.mido1) precise-grizzly; urgency=low
+
+  * Add new package quantum-plugin-midonet-custom. 
+
+ -- Ryu Ishimoto <ryu@midokura.com>  Fri, 19 Jul 2013 09:42:39 +0900
+
 quantum (1:2013.1.2.mido2-0ubuntu1.mido0) precise-grizzly; urgency=low
 
   * Bug fixes for MidoNet plugin

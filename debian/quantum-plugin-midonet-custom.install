@@ -1,0 +1,2 @@
+etc/quantum/plugins/midonet/* etc/quantum/plugins/midonet
+usr/lib/python*/dist-packages/quantum/plugins/midonet/*
