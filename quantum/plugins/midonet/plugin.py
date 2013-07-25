@@ -787,52 +787,59 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     "router_id=%(router_id)s "
                     "interface_info=%(interface_info)r"),
                   {'router_id': router_id, 'interface_info': interface_info})
+        session = context.session
+        with session.begin(subtransactions=True):
+            qport = super(MidonetPluginV2, self).add_router_interface(
+                context, router_id, interface_info)
 
-        qport = super(MidonetPluginV2, self).add_router_interface(
-            context, router_id, interface_info)
+            # TODO(tomoe): handle a case with 'port' in interface_info
+            if 'subnet_id' in interface_info:
+                subnet_id = interface_info['subnet_id']
+                subnet = self._get_subnet(context, subnet_id)
 
-        # TODO(tomoe): handle a case with 'port' in interface_info
-        if 'subnet_id' in interface_info:
-            subnet_id = interface_info['subnet_id']
-            subnet = self._get_subnet(context, subnet_id)
+                gateway_ip = subnet['gateway_ip']
+                network_address, length = subnet['cidr'].split('/')
 
-            gateway_ip = subnet['gateway_ip']
-            network_address, length = subnet['cidr'].split('/')
+                # Link the router and the bridge port.
+                mrouter = self.mido_api.get_router(router_id)
+                mrouter_port = mrouter.add_interior_port().port_address(
+                    gateway_ip).network_address(
+                        network_address).network_length(length).create()
 
-            # Link the router and the bridge port.
-            mrouter = self.mido_api.get_router(router_id)
-            mrouter_port = mrouter.add_interior_port().port_address(
-                gateway_ip).network_address(
-                    network_address).network_length(length).create()
+                mbridge_port = self.mido_api.get_port(qport['port_id'])
+                mrouter_port.link(mbridge_port.get_id())
 
-            mbridge_port = self.mido_api.get_port(qport['port_id'])
-            mrouter_port.link(mbridge_port.get_id())
+                # Add a route entry to the subnet
+                mrouter.add_route().type('Normal').src_network_addr(
+                    '0.0.0.0').src_network_length(0).dst_network_addr(
+                        network_address).dst_network_length(length).weight(
+                            100).next_hop_port(mrouter_port.get_id()).create()
+                # Add a route for the metadata server. Not all VM images supports DHCP
+                # option 121
+                rport_qry = context.session.query(models_v2.Port)
+                dhcp_ports = rport_qry.filter_by(
+                    network_id=subnet.network_id,
+                    device_owner='network:dhcp').all()
 
-            # Add a route entry to the subnet
-            mrouter.add_route().type('Normal').src_network_addr(
-                '0.0.0.0').src_network_length(0).dst_network_addr(
-                    network_address).dst_network_length(length).weight(
-                        100).next_hop_port(mrouter_port.get_id()).create()
-            # Add a route for the metadata server. Not all VM images supports DHCP
-            # option 121
-            rport_qry = context.session.query(models_v2.Port)
-            dhcp_ports = rport_qry.filter_by(
-                network_id=subnet.network_id,
-                device_owner='network:dhcp').all()
+                # Add a route for the Metadata server in the router to forward
+                # the packets to the bridge that will send them to the Metadata Proxy
+                # Since we don't support multiple subnets it's ok to take the first fixed_ip
 
-            # Add a route for the Metadata server in the router to forward
-            # the packets to the bridge that will send them to the Metadata Proxy
-            # Since we don't support multiple subnets it's ok to take the first fixed_ip
+                #check that the port exists
+                if dhcp_ports:
+    
+                    mrouter.add_route().type('Normal').src_network_addr(
+                        network_address).src_network_length(length).dst_network_addr(
+                            METADATA_DEFAULT_IP).dst_network_length(
+                                32).next_hop_port(mrouter_port.get_id()).next_hop_gateway(
+                                    dhcp_ports[0].fixed_ips[0].ip_address).create()
+                else:
+                    LOG.debug("DHCP agent is not working correctly. No port to reach the"
+                              " Metadata server on this network")
 
-            mrouter.add_route().type('Normal').src_network_addr(
-                network_address).src_network_length(length).dst_network_addr(
-                    METADATA_DEFAULT_IP).dst_network_length(
-                        32).next_hop_port(mrouter_port.get_id()).next_hop_gateway(
-                            dhcp_ports[0].fixed_ips[0].ip_address).create()
-
-        LOG.debug(_("MidonetPluginV2.add_router_interface exiting: "
-                    "qport=%r"), qport)
-        return qport
+            LOG.debug(_("MidonetPluginV2.add_router_interface exiting: "
+                        "qport=%r"), qport)
+            return qport
 
     def remove_router_interface(self, context, router_id, interface_info):
         """Remove interior router ports.
