@@ -131,10 +131,10 @@ class MidonetInterfaceDriver(interface.LinuxInterfaceDriver):
                 host.add_host_interface_port().port_id(vport_id) \
                     .interface_name(host_dev_name).create()
             except w_exc.HTTPError as e:
-                LOG.warn('Faild binding vport=%r to device=%r', vport_id, host_dev_name)
+                LOG.warn('Faild binding vport=%r to device=%r',
+                         vport_id, host_dev_name)
         else:
             LOG.warn(_("Device %s already exists"), device_name)
-
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         # the port will be deleted by the dhcp agent that will call the plugin
@@ -143,6 +143,3 @@ class MidonetInterfaceDriver(interface.LinuxInterfaceDriver):
                                  namespace)
         device.link.delete()
         LOG.debug(_("Unplugged interface '%s'"), device_name)
-
-
-
