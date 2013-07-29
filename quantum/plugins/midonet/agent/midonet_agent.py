@@ -53,6 +53,14 @@ class DhcpDriverNoOp(dhcp.DhcpLocalProcess):
         """Enables DHCP for this network."""
         pass
 
+    def disable(self, retain_port=False):
+        """Disable DHCP for this network."""
+
+        if not retain_port:
+            self.device_delegate.destroy(self.network, self.interface_name)
+
+        self._remove_config_files()
+
 
 midonet_interface_driver_opts = [
     cfg.StrOpt('midonet_host_uuid_path',
@@ -143,3 +151,6 @@ class MidonetInterfaceDriver(interface.LinuxInterfaceDriver):
                                  namespace)
         device.link.delete()
         LOG.debug(_("Unplugged interface '%s'"), device_name)
+
+        ip_lib.IPWrapper(
+            self.root_helper, namespace).garbage_collect_namespace()
