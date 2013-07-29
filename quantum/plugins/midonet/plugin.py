@@ -68,7 +68,8 @@ class MidoRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
 
-        This a basic implementation that will call the plugin like get_ports and handle basic events
+        This a basic implementation that will call the plugin like get_ports
+        and handle basic events
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
@@ -182,10 +183,10 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 # add a route for the subnet in the provider router
                 self.provider_router.add_route().type(
                     'Normal').src_network_addr('0.0.0.0').src_network_length(
-                        0).dst_network_addr(
-                            network_address).dst_network_length(
-                                length).weight(100).next_hop_port(
-                                    pr_port.get_id()).create()
+                    0).dst_network_addr(
+                    network_address).dst_network_length(
+                    length).weight(100).next_hop_port(
+                    pr_port.get_id()).create()
 
         LOG.debug(_("MidonetPluginV2.create_subnet exiting: sn_entry=%r"),
                   sn_entry)
@@ -252,9 +253,9 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if sn.get('cidr'):
                 network_address, prefix = sn['cidr'].split('/')
                 if network_address != b_network_address or int(
-                    prefix) != b_prefix:
-                    raise MidonetResourceNotFound(resource_type='DhcpSubnet',
-                                                  id=sn['cidr'])
+                        prefix) != b_prefix:
+                        raise MidonetResourceNotFound(
+                            resource_type='DhcpSubnet', id=sn['cidr'])
 
         LOG.debug(_("MidonetPluginV2.create_subnet exiting"))
         return subnets
@@ -272,29 +273,31 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             subnet = super(MidonetPluginV2, self).get_subnet(context, id,
                                                              fields=None)
             net = super(MidonetPluginV2, self).get_network(context,
-                                                           subnet['network_id'],
+                                                           subnet[
+                                                               'network_id'],
                                                            fields=None)
             ret = super(MidonetPluginV2, self).delete_subnet(context, id)
             bridge_id = subnet['network_id']
             try:
                 bridge = self.mido_api.get_bridge(bridge_id)
             except w_exc.HTTPNotFound:
-                raise MidonetResourceNotFound(resource_type='Bridge', id=bridge_id)
-    
+                raise MidonetResourceNotFound(resource_type='Bridge',
+                                              id=bridge_id)
+
             dhcp = bridge.get_dhcp_subnets()
             dhcp[0].delete()
-    
+
             # If the network is external, clean up routes, links, ports.
             self._extend_network_dict_l3(context, net)
             if net['router:external']:
                 # Delete routes and unlink the router and the bridge.
                 routes = self.provider_router.get_routes()
-    
+
                 bridge_ports_to_delete = []
                 for p in self.provider_router.get_peer_ports():
                     if p.get_device_id() == bridge.get_id():
                         bridge_ports_to_delete.append(p)
-    
+
                 for p in bridge.get_peer_ports():
                     if p.get_device_id() == self.provider_router.get_id():
                         # delete the routes going to the brdge
@@ -303,10 +306,10 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                 r.delete()
                         p.unlink()
                         p.delete()
-    
+
                 # delete bridge port
                 map(lambda x: x.delete(), bridge_ports_to_delete)
-    
+
         LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
         return ret
 
@@ -353,7 +356,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         # Reject admin_state_up=False
         if network['network'].get('admin_state_up') and network['network'][
-            'admin_state_up'] is False:
+                'admin_state_up'] is False:
             raise q_exc.NotImplementedError(_('admin_state_up=False '
                                               'networks are not '
                                               'supported.'))
@@ -478,7 +481,8 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                             fixed_ip).mac_addr(mac).create()
             elif is_dhcp_interface:
                 dhcp_subnets = bridge.get_dhcp_subnets()
-                routes = [{'destinationPrefix': METADATA_DEFAULT_IP, 'destinationLength': 32,
+                routes = [{'destinationPrefix': METADATA_DEFAULT_IP,
+                           'destinationLength': 32,
                            'gatewayAddr': fixed_ip}]
                 if dhcp_subnets:
                     dhcp_subnets[0].opt121_routes(routes).update()
@@ -589,7 +593,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # set chains to in/out filters
             mrouter.inbound_filter_id(
                 chains['in'].get_id()).outbound_filter_id(
-                    chains['out'].get_id()).update()
+                chains['out'].get_id()).update()
 
             # get entry from the DB and update 'id' with MidoNet router id.
             qrouter_entry = self._get_router(context, qrouter['id'])
@@ -614,7 +618,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         # figure out which operation it is in
         if ('external_gateway_info' in router['router'] and
-            'network_id' in router['router']['external_gateway_info']):
+                'network_id' in router['router']['external_gateway_info']):
             op_gateway_set = True
         elif ('external_gateway_info' in router['router'] and
               router['router']['external_gateway_info'] == {}):
@@ -652,12 +656,12 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 in_port = self.provider_router.add_interior_port()
                 pr_port = in_port.network_address(
                     '169.254.255.0').network_length(30).port_address(
-                        '169.254.255.1').create()
+                    '169.254.255.1').create()
 
                 # Create a port in the tenant router
                 tr_port = tenant_router.add_interior_port().network_address(
                     '169.254.255.0').network_length(30).port_address(
-                        '169.254.255.2').create()
+                    '169.254.255.2').create()
 
                 # Link them
                 pr_port.link(tr_port.get_id())
@@ -665,15 +669,14 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 # Add a route for snat_ip to bring it down to tenant
                 self.provider_router.add_route().type(
                     'Normal').src_network_addr('0.0.0.0').src_network_length(
-                        0).dst_network_addr(snat_ip).dst_network_length(
-                            32).weight(100).next_hop_port(
-                                pr_port.get_id()).create()
+                    0).dst_network_addr(snat_ip).dst_network_length(
+                    32).weight(100).next_hop_port(pr_port.get_id()).create()
 
                 # Add default route to uplink in the tenant router
                 tenant_router.add_route().type('Normal').src_network_addr(
                     '0.0.0.0').src_network_length(0).dst_network_addr(
-                        '0.0.0.0').dst_network_length(0).weight(
-                            100).next_hop_port(tr_port.get_id()).create()
+                    '0.0.0.0').dst_network_length(0).weight(
+                    100).next_hop_port(tr_port.get_id()).create()
 
                 # ADD SNAT(masquerade) rules
                 chains = self.chain_manager.get_router_chains(
@@ -681,8 +684,8 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
                 chains['in'].add_rule().nw_dst_address(snat_ip).nw_dst_length(
                     32).type('rev_snat').flow_action('accept').in_ports(
-                        [tr_port.get_id()]).properties(
-                            SNAT_RULE_PROPERTY).position(1).create()
+                    [tr_port.get_id()]).properties(
+                    SNAT_RULE_PROPERTY).position(1).create()
 
                 nat_targets = []
                 nat_targets.append(
@@ -691,8 +694,8 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
                 chains['out'].add_rule().type('snat').flow_action(
                     'accept').nat_targets(nat_targets).out_ports(
-                        [tr_port.get_id()]).properties(
-                            SNAT_RULE_PROPERTY).position(1).create()
+                    [tr_port.get_id()]).properties(
+                    SNAT_RULE_PROPERTY).position(1).create()
 
             if op_gateway_clear:
                 # delete the port that is connected to provider router
@@ -717,13 +720,13 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 for r in chains['in'].get_rules():
                     if OS_TENANT_ROUTER_RULE_KEY in r.get_properties():
                         if r.get_properties()[
-                            OS_TENANT_ROUTER_RULE_KEY] == SNAT_RULE:
+                                OS_TENANT_ROUTER_RULE_KEY] == SNAT_RULE:
                             r.delete()
 
                 for r in chains['out'].get_rules():
                     if OS_TENANT_ROUTER_RULE_KEY in r.get_properties():
                         if r.get_properties()[
-                            OS_TENANT_ROUTER_RULE_KEY] == SNAT_RULE:
+                                OS_TENANT_ROUTER_RULE_KEY] == SNAT_RULE:
                             r.delete()
 
         LOG.debug(_("MidonetPluginV2.update_router exiting: qrouter=%r"),
@@ -745,10 +748,10 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                           mrouter.get_id())
             chains['in'].delete()
             chains['out'].delete()
-    
+
             # delete the router
             mrouter.delete()
-    
+
             LOG.debug(_("MidonetPluginV2.delete_router exiting: result=%s"),
                       result)
             return result
@@ -790,8 +793,8 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         # TODO(tomoe): handle a case with 'port' in interface_info
         if 'subnet_id' not in interface_info:
-             raise MidonetPluginException("No subnet_id provided. Midonet doesn't
-                                           support this.")
+            raise MidonetPluginException("No subnet_id provided. Midonet"
+                                         "doesn't support this.")
 
         session = context.session
         with session.begin(subtransactions=True):
@@ -808,7 +811,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             mrouter = self.mido_api.get_router(router_id)
             mrouter_port = mrouter.add_interior_port().port_address(
                 gateway_ip).network_address(
-                    network_address).network_length(length).create()
+                network_address).network_length(length).create()
 
             mbridge_port = self.mido_api.get_port(qport['port_id'])
             mrouter_port.link(mbridge_port.get_id())
@@ -816,30 +819,32 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # Add a route entry to the subnet
             mrouter.add_route().type('Normal').src_network_addr(
                 '0.0.0.0').src_network_length(0).dst_network_addr(
-                    network_address).dst_network_length(length).weight(
-                        100).next_hop_port(mrouter_port.get_id()).create()
-            # Add a route for the metadata server. Not all VM images supports DHCP
-            # option 121
+                network_address).dst_network_length(length).weight(
+                100).next_hop_port(mrouter_port.get_id()).create()
+            # Add a route for the metadata server. Not all VM images
+            # supports DHCP option 121
             rport_qry = context.session.query(models_v2.Port)
             dhcp_ports = rport_qry.filter_by(
                 network_id=subnet.network_id,
                 device_owner='network:dhcp').all()
 
             # Add a route for the Metadata server in the router to forward
-            # the packets to the bridge that will send them to the Metadata Proxy
-            # Since we don't support multiple subnets it's ok to take the first fixed_ip
+            # the packets to the bridge that will send them to the
+            # Metadata Proxy. Since we don't support multiple subnets
+            # it's ok to take the first fixed_ip
 
             #check that the port exists
             if dhcp_ports:
 
                 mrouter.add_route().type('Normal').src_network_addr(
-                    network_address).src_network_length(length).dst_network_addr(
-                        METADATA_DEFAULT_IP).dst_network_length(
-                            32).next_hop_port(mrouter_port.get_id()).next_hop_gateway(
-                                dhcp_ports[0].fixed_ips[0].ip_address).create()
-             else:
-                LOG.debug("DHCP agent is not working correctly. No port to reach the"
-                              " Metadata server on this network")
+                    network_address).src_network_length(
+                    length).dst_network_addr(
+                    METADATA_DEFAULT_IP).dst_network_length(
+                    32).next_hop_port(mrouter_port.get_id()).next_hop_gateway(
+                    dhcp_ports[0].fixed_ips[0].ip_address).create()
+            else:
+                LOG.debug("DHCP agent is not working correctly. No port to " +
+                          "reach the Metadata server on this network")
 
             LOG.debug(_("MidonetPluginV2.add_router_interface exiting: "
                         "qport=%r"), qport)
@@ -935,10 +940,10 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 # add a route for the floating ip to bring it to the tenant
                 self.provider_router.add_route().type(
                     'Normal').src_network_addr('0.0.0.0').src_network_length(
-                        0).dst_network_addr(
-                            floating_address).dst_network_length(
-                                32).weight(100).next_hop_port(
-                                    pr_port.get_id()).create()
+                    0).dst_network_addr(
+                    floating_address).dst_network_length(
+                    32).weight(100).next_hop_port(
+                    pr_port.get_id()).create()
 
                 chains = self.chain_manager.get_router_chains(fip['tenant_id'],
                                                               fip['router_id'])
@@ -951,9 +956,9 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 floating_property = {OS_FLOATING_IP_RULE_KEY: id}
                 chains['in'].add_rule().nw_dst_address(
                     floating_address).nw_dst_length(32).type(
-                        'dnat').flow_action('accept').nat_targets(
-                            nat_targets).in_ports([tr_port_id]).position(
-                                1).properties(floating_property).create()
+                    'dnat').flow_action('accept').nat_targets(
+                    nat_targets).in_ports([tr_port_id]).position(
+                    1).properties(floating_property).create()
 
                 nat_targets = []
                 nat_targets.append(
@@ -964,10 +969,10 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
                 chains['out'].add_rule().nw_src_address(
                     fixed_address).nw_src_length(32).type(
-                        'snat').flow_action('accept').nat_targets(
-                            nat_targets).out_ports(
-                                [tr_port_id]).position(1).properties(
-                                    floating_property).create()
+                    'snat').flow_action('accept').nat_targets(
+                    nat_targets).out_ports(
+                    [tr_port_id]).position(1).properties(
+                    floating_property).create()
 
             # disassociate floating IP
             elif floatingip['floatingip']['port_id'] is None:
@@ -1057,7 +1062,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
             filters = {'security_group_id': [sg_id]}
             if super(MidonetPluginV2, self)._get_port_security_group_bindings(
-                context, filters):
+                    context, filters):
                 raise ext_sg.SecurityGroupInUse(id=sg_id)
 
             # Delete MidoNet Chains and portgroup for the SG
@@ -1090,7 +1095,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         with context.session.begin(subtransactions=True):
             rule_db_entry = super(
                 MidonetPluginV2, self).create_security_group_rule(
-                    context, security_group_rule)
+                context, security_group_rule)
 
             self.rule_manager.create_for_sg_rule(rule_db_entry)
             LOG.debug(_("MidonetPluginV2.create_security_group_rule exiting: "
