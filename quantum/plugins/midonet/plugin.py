@@ -834,7 +834,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # it's ok to take the first fixed_ip
 
             #check that the port exists
-            if dhcp_ports:
+            if dhcp_ports and dhcp_ports[0].fixed_ips:
 
                 mrouter.add_route().type('Normal').src_network_addr(
                     network_address).src_network_length(
