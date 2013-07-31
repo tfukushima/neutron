@@ -79,6 +79,7 @@ class MidoRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
 class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                       l3_db.L3_NAT_db_mixin,
+                      agentschedulers_db.AgentSchedulerDbMixin,
                       securitygroups_db.SecurityGroupDbMixin):
     supported_extension_aliases = ['router', 'security-group']
 
