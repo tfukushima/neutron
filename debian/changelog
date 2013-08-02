@@ -1,3 +1,14 @@
+quantum (1:2013.1.2.mido3-0ubuntu1.mido1) precise-grizzly; urgency=low
+
+  * Bug fixed for Midonet plugin
+    - [2b018bd] Added AgentSchedulerDbMixin to Midonet Plugin
+    - [ca9202c] Added check for fixed_ip in  add_router_interface
+    - [q27cbcd] Clean up the veth and ns created by the dchp agent
+    - [4f398d0] Checking if not subnet_id in add router interface
+    - [66962d4] Check if dhcp port exist in adding router interface
+
+ -- Rossella Sblendido <rossella@midokura.com>  Fri, 02 Aug 2013 15:24:19 +0000
+
 quantum (1:2013.1.2.mido2-0ubuntu1.mido1) precise-grizzly; urgency=low
 
   * Add new package quantum-plugin-midonet-custom. 
