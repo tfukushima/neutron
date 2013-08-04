@@ -26,6 +26,7 @@ from webob import exc as w_exc
 
 from quantum.common import exceptions as q_exc
 from quantum.common.utils import find_config_file
+from quantum.db import agentschedulers_db
 from quantum.db import api as db
 from quantum.db import db_base_plugin_v2
 from quantum.db import l3_db
