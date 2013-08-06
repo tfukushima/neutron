@@ -1,3 +1,11 @@
+quantum (1:2013.1.2.mido4-0ubuntu1.mido1) precise-grizzly; urgency=low
+
+  * Add new package python-quantum-plugin-midonet
+  * Bug fixed
+    - [eb50057] Import agentschedulers_db
+
+ -- Ryu Ishimoto <ryu@midokura.com>  Tue, 06 Aug 2013 09:25:41 +0900
+
 quantum (1:2013.1.2.mido3-0ubuntu1.mido1) precise-grizzly; urgency=low
 
   * Bug fixed for Midonet plugin
