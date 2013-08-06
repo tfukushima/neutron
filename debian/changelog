@@ -1,3 +1,22 @@
+quantum (1:2013.1.2-0ubuntu1~cloud0.mido1) precise-grizzly; urgency=low
+
+  * Changes 
+    - [3c5f579] Add RHEL packaging files
+    - [a96102a] Import agentschedulers_db
+    - [91f76bb] Added AgentSchedulerDbMixin to Midonet Plugin
+    - [6c2bc1f] Added check for fixed_ip in  add_router_interface
+    - [6fa9e48] Clean up the veth and ns created by the dchp agent
+    - [692219b] Corrected Pep8 warnings
+    - [16d2547] Checking if not subnet_id in add router interface
+    - [b9fbfcb] Check if dhcp port exist in adding router interface
+    - [31fa03f] Wrap a midonet port deletion under transaction
+    - [c90bf60] Wrap delete operations for router in a transaction
+    - [78531da] Wrap delete operations for subnet in a transaction
+    - [0f57856] MD server support using DHCP agent and MD Proxy
+    - [0f6ab9c] Update README with MidoNet compatiblity
+
+ -- Ryu Ishimoto <ryu@midokura.com>  Tue, 06 Aug 2013 15:27:13 +0900
+
 quantum (1:2013.1.2-0ubuntu1~cloud0.mido0) precise-grizzly; urgency=low
 
   * Add mido to the version. 
