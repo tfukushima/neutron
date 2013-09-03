@@ -91,16 +91,17 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         midonet_uri = midonet_conf.midonet_uri
         admin_user = midonet_conf.username
         admin_pass = midonet_conf.password
-        admin_project_id = midonet_conf.project_id         
+        admin_project_id = midonet_conf.project_id
         mode = midonet_conf.mode
         self.provider_router_id = midonet_conf.provider_router_id
+        self.provider_router = None
 
         self.mido_api = api.MidonetApi(midonet_uri, admin_user,
                                        admin_pass,
                                        project_id=admin_project_id)
 
         # self.provider_router_id should have been set.
-        if not hasattr(self, 'provider_router_id'): 
+        if self.provider_router_id is None:
             msg = _('provider_router_id and metadata_router_id '
                     'should be configured in the plugin config file')
             LOG.exception(msg)
@@ -113,8 +114,9 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         db.configure_db()
 
     def _get_provider_router(self):
-        if not hasattr(self, 'provider_router'):
-            self.provider_router = self.mido_api.get_router(self.provider_router_id) 
+        if self.provider_router is None:
+            self.provider_router = self.mido_api.get_router(
+                self.provider_router_id)
         return self.provider_router
 
     def setup_rpc(self):
