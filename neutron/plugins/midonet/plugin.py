@@ -366,6 +366,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         Creates a Neutron subnet and a DHCP entry in MidoNet bridge.
         """
         LOG.debug(_("MidonetPluginV2.create_subnet called: subnet=%r"), subnet)
+	s = dict(subnet)
 
         subnet_data = subnet["subnet"]
         net = super(MidonetPluginV2, self).get_network(
@@ -379,7 +380,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             gateway_ip = subnet_data['gateway_ip']
             cidr = subnet_data['cidr']
-            self.client.create_dhcp(bridge, gateway_ip, cidr)
+            self.client.create_dhcp(bridge, gateway_ip, cidr, subnet, subnet_data['host_routes'], subnet_data['dns_nameservers'])
 
             # For external network, link the bridge to the provider router.
             if net['router:external']:

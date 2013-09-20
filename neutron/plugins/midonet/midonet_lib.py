@@ -107,7 +107,7 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Bridge', id=id)
 
     @handle_api_error
-    def create_dhcp(self, bridge, gateway_ip, cidr):
+    def create_dhcp(self, bridge, gateway_ip, cidr, host_routes, dns_nameservers):
         """Create a new DHCP entry
 
         :param bridge: bridge object to add dhcp to
@@ -118,10 +118,7 @@ class MidoClient:
         LOG.debug(_("MidoClient.create_dhcp called: bridge=%(bridge)s, "
                     "cidr=%(cidr)s, gateway_ip=%(gateway_ip)s"),
                   {'bridge': bridge, 'cidr': cidr, 'gateway_ip': gateway_ip})
-        net_addr, net_len = net_util.net_addr(cidr)
-        return bridge.add_dhcp_subnet().default_gateway(
-            gateway_ip).subnet_prefix(net_addr).subnet_length(
-                net_len).create()
+        self.midonet_api.add_bridge_dhcp(bridge, gateway_ip, cidr, host_routes, dns_nameservers)
 
     @handle_api_error
     def add_dhcp_host(self, bridge, cidr, ip, mac):
