@@ -22,6 +22,7 @@
 
 import mock
 import os
+import re
 import sys
 
 import neutron.common.test_lib as test_lib
@@ -51,6 +52,8 @@ class MidonetPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.instance = self.mock_api.start()
         mock_cfg = mock_lib.MidonetLibMockConfig(self.instance.return_value)
         mock_cfg.setup()
+        mock_client = mock_lib.MidoClientMockConfig(self.instance.return_value)
+        mock_client.setup()
         super(MidonetPluginV2TestCase, self).setUp(self._plugin_name)
 
     def tearDown(self):
@@ -119,6 +122,37 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
 
     # IPv6 is not supported by MidoNet yet.  Ignore tests that attempt to
     # create IPv6 subnet.
-
     def test_requested_subnet_id_v4_and_v6(self):
         pass
+
+    def test_create_port_json(self):
+        super(TestMidonetPortsV2, self).test_create_port_json()
+        chains = self.instance().get_chains(query=None)
+        inbound_pattern = re.compile("OS_PORT_.*_INBOUND")
+        outbound_pattern = re.compile("OS_PORT_.*_OUTBOUND")
+        egress_pattern = re.compile("OS_SG_.*_EGRESS")
+        ingress_pattern = re.compile("OS_SG_.*_INGRESS")
+        for chain in chains:
+            if inbound_pattern.match(chain.get_name()):
+                self._verify_inbound_chain(chain)
+            elif outbound_pattern.match(chain.get_name()):
+                self._verify_outbound_chain(chain)
+            elif egress_pattern.match(chain.get_name()):
+                self._verify_egress_chain(chain)
+            elif ingress_pattern.match(chain.get_name()):
+                self._verify_ingress_chain(chain)
+            else:
+                raise Exception("Unexpected chain: " + chain.get_name())
+
+    def _verify_inbound_chain(self, chain):
+        print "inbound: ", chain.get_rules()
+
+    def _verify_outbound_chain(self, chain):
+        print 'outbound: ', chain.get_rules()
+
+    def _verify_egress_chain(self, chain):
+        print 'egress: ', chain.get_rules()
+
+    def _verify_ingress_chain(self, chain):
+        print 'ingress: ', chain.get_rules()
+
