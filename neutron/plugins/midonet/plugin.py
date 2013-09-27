@@ -197,7 +197,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     supported_extension_aliases = ['external-net', 'router', 'security-group',
                                    'agent' 'dhcp_agent_scheduler']
-    __native_bulk_support = False
+    __native_bulk_support = True
 
     def __init__(self):
         # Read config values
@@ -1106,6 +1106,11 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             super(MidonetPluginV2, self).delete_security_group(context, id)
 
     def create_security_group_rule(self, context, security_group_rule):
+        """Create a single security group rule."""
+        bulk_rule = {'security_group_rules': [security_group_rule]}
+        return self.create_security_group_rule_bulk(context, bulk_rule)[0]
+
+    def create_security_group_rule_bulk(self, context, security_group_rule):
         """Create a security group rule
 
         Create a security group rule in the Neutron DB and corresponding
@@ -1116,14 +1121,16 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   {'security_group_rule': security_group_rule})
 
         with context.session.begin(subtransactions=True):
-            rule = super(MidonetPluginV2, self).create_security_group_rule(
-                context, security_group_rule)
+            rules = super(
+                MidonetPluginV2, self).create_security_group_rule_bulk_native(
+                    context, security_group_rule)
 
-            self._create_accept_chain_rule(context, rule)
+            for rule in rules: 
+                self._create_accept_chain_rule(context, rule)
 
             LOG.debug(_("MidonetPluginV2.create_security_group_rule exiting: "
-                        "rule=%r"), rule)
-            return rule
+                        "rules=%r"), rules)
+            return rules
 
     def delete_security_group_rule(self, context, sg_rule_id):
         """Delete a security group rule
