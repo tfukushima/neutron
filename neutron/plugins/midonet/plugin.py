@@ -39,6 +39,7 @@ from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
+from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
@@ -196,7 +197,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       securitygroups_db.SecurityGroupDbMixin):
 
     supported_extension_aliases = ['external-net', 'router', 'security-group',
-                                   'agent' 'dhcp_agent_scheduler']
+                                   'agent' 'dhcp_agent_scheduler', 'binding']
     __native_bulk_support = False
 
     def __init__(self):
@@ -554,6 +555,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                           {"net_id": port_data["network_id"], "err": ex})
                 self.client.delete_port(bridge_port.get_id())
 
+	port_data = self._port_viftype_binding(context, port_data)
         LOG.debug(_("MidonetPluginV2.create_port exiting: port=%r"), port_data)
         return port_data
 
@@ -570,6 +572,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       {"id": id})
             port['status'] = constants.PORT_STATUS_ERROR
             raise exc
+        port = self._port_viftype_binding(context, port)
         LOG.debug(_("MidonetPluginV2.get_port exiting: port=%r"), port)
         return port
 
@@ -580,6 +583,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   {'filters': filters, 'fields': fields})
         ports = super(MidonetPluginV2, self).get_ports(context, filters,
                                                        fields)
+        for port_data in ports:
+            self._port_viftype_binding(context, port_data)
+        LOG.debug(_("MidonetPluginV2.get_ports exiting: port=%r"), ports)
         return ports
 
     def delete_port(self, context, id, l3_port_check=True):
@@ -632,6 +638,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             mac = old_port["mac_address"]
             old_fixed_ips = old_port.get('fixed_ips')
 
+            port["port"]["admin_state_up"] = True
             # update the port DB
             p = super(MidonetPluginV2, self).update_port(context, id, port)
 
@@ -651,6 +658,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 sg_ids = self._get_security_groups_on_port(context, port)
                 self._bind_port_to_sgs(context, p, sg_ids)
 
+        p = self._port_viftype_binding(context, p)
         return p
 
     def create_router(self, context, router):
@@ -921,6 +929,13 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         routes = self.client.get_router_routes(router_id)
         self.client.delete_port_routes(routes, bridge_port.get_peer_id())
         self.client.unlink(bridge_port)
+
+    def _port_viftype_binding(self, context, port):
+        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_MIDONET
+        port[portbindings.CAPABILITIES] = {
+            portbindings.CAP_PORT_FILTER:
+            'security-group' in self.supported_extension_aliases}
+        return port
 
     def add_router_interface(self, context, router_id, interface_info):
         """Handle router linking with network."""
