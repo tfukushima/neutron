@@ -148,10 +148,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         net = super(MidonetPluginV2, self).get_network(
             context, subnet['subnet']['network_id'], fields=None)
-        if net['subnets']:
-            raise q_exc.NotImplementedError(
-                _("MidoNet doesn't support multiple subnets "
-                  "on the same network."))
 
         session = context.session
         with session.begin(subtransactions=True):
@@ -215,13 +211,18 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                           id=bridge_id)
 
         # get dhcp subnet data from MidoNet bridge.
+        network_address, prefix = qsubnet['cidr'].split('/')
         dhcps = bridge.get_dhcp_subnets()
-        b_network_address = dhcps[0].get_subnet_prefix()
-        b_prefix = dhcps[0].get_subnet_length()
+        found = False
+        for dhcp in dhcps:
+            b_network_address = dhcp.get_subnet_prefix()
+            b_prefix = dhcp.get_subnet_length()
+            if network_address == b_network_address or int(prefix) == b_prefix:
+                found = True
+                break
 
         # Validate against quantum database.
-        network_address, prefix = qsubnet['cidr'].split('/')
-        if network_address != b_network_address or int(prefix) != b_prefix:
+        if found is False:
             raise MidonetResourceNotFound(resource_type='DhcpSubnet',
                                           id=qsubnet['cidr'])
 
@@ -252,8 +253,11 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 raise MidonetResourceNotFound(resource_type='Bridge',
                                               id=bridge_id)
 
-            dhcp = bridge.get_dhcp_subnets()
-            dhcp[0].delete()
+            dhcps = bridge.get_dhcp_subnets()
+            for dhcp in dhcps:
+                if dhcp.get_subnet_prefix() == subnet['cidr']:
+                    dhcp.delete()
+                    break
 
             # If the network is external, clean up routes, links, ports.
             self._extend_network_dict_l3(context, net)
