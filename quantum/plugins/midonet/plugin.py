@@ -913,19 +913,29 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             context, router_id, interface_info)
         LOG.debug(_("MidonetPluginV2.remove_router_interface exiting"))
 
-    def update_floatingip(self, context, id, floatingip):
-        LOG.debug(_("MidonetPluginV2.update_floatingip called: id=%(id)s "
-                    "floatingip=%(floatingip)s "),
-                  {'id': id, 'floatingip': floatingip})
+    def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
+        LOG.debug(_("MidonetPluginV2._update_fip_assoc called: fip=%(fip)s"
+                    "floatingip_db=%(floatingip_db)s, "
+                    "external_port=%(external_port)s"), 
+                  {'fip': fip, 'floatingip_db': floatingip_db, 
+                   'external_port': external_port})
 
         session = context.session
         with session.begin(subtransactions=True):
-            if floatingip['floatingip']['port_id']:
-                fip = super(MidonetPluginV2, self).update_floatingip(
-                    context, id, floatingip)
-                router_id = fip['router_id']
-                floating_address = fip['floating_ip_address']
-                fixed_address = fip['fixed_ip_address']
+            super(MidonetPluginV2, self)._update_fip_assoc(context, fip, 
+                floatingip_db, external_port)
+
+            tenant_id = fip['tenant_id']
+            floating_address = floatingip_db['floating_ip_address']
+            id = floatingip_db['id']
+
+            if 'port_id' in fip and fip['port_id']:
+                port_id, internal_ip_address, router_id = self.get_assoc_data(
+                   context,
+                   fip,
+                   floatingip_db['floating_network_id'])
+    
+                fixed_address = internal_ip_address
 
                 tenant_router = self.mido_api.get_router(router_id)
                 # find the provider router port that is connected to the tenant
@@ -945,8 +955,8 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     32).weight(100).next_hop_port(
                     pr_port.get_id()).create()
 
-                chains = self.chain_manager.get_router_chains(fip['tenant_id'],
-                                                              fip['router_id'])
+                chains = self.chain_manager.get_router_chains(tenant_id,
+                                                              router_id)
                 # add dnat/snat rule pair for the floating ip
                 nat_targets = []
                 nat_targets.append(
@@ -975,13 +985,10 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                     floating_property).create()
 
             # disassociate floating IP
-            elif floatingip['floatingip']['port_id'] is None:
-
-                fip = super(MidonetPluginV2, self).get_floatingip(context, id)
-
-                router_id = fip['router_id']
-                floating_address = fip['floating_ip_address']
-                fixed_address = fip['fixed_ip_address']
+            elif 'port_id' in fip and fip['port_id'] is None:
+                router_id = floatingip_db['router_id']
+                if not router_id:
+                    return
 
                 # delete the route for this floating ip
                 for r in self._get_provider_router().get_routes():
@@ -990,8 +997,8 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                         r.delete()
 
                 # delete snat/dnat rule pair for this floating ip
-                chains = self.chain_manager.get_router_chains(fip['tenant_id'],
-                                                              fip['router_id'])
+                chains = self.chain_manager.get_router_chains(tenant_id,
+                                                              router_id)
                 LOG.debug(_('chains=%r'), chains)
 
                 for r in chains['in'].get_rules():
@@ -1008,11 +1015,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                             r.delete()
                             break
 
-                super(MidonetPluginV2, self).update_floatingip(context, id,
-                                                               floatingip)
-
-        LOG.debug(_("MidonetPluginV2.update_floating_ip exiting: fip=%s"), fip)
-        return fip
+        LOG.debug(_("MidonetPluginV2._update_fip_assoc exiting"))
 
     #
     # Security groups supporting methods
