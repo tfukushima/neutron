@@ -24,6 +24,7 @@ from midonetclient import api
 from oslo.config import cfg
 from webob import exc as w_exc
 
+from eventlet.semaphore import Semaphore
 from quantum.common import exceptions as q_exc
 from quantum.common.utils import find_config_file
 from quantum.db import agentschedulers_db
@@ -50,6 +51,7 @@ OS_FLOATING_IP_RULE_KEY = 'OS_FLOATING_IP'
 SNAT_RULE = 'SNAT'
 SNAT_RULE_PROPERTY = {OS_TENANT_ROUTER_RULE_KEY: SNAT_RULE}
 METADATA_DEFAULT_IP = '169.254.169.254'
+PORT_ALLOC_SEM = Semaphore()
 
 
 class MidonetResourceNotFound(q_exc.NotFound):
@@ -404,12 +406,16 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # set midonet port id to quantum port id and create a DB record.
             port_data['id'] = bridge_port.get_id()
 
-        session = context.session
-        with session.begin(subtransactions=True):
-            port_db_entry = super(MidonetPluginV2,
-                                  self).create_port(context, port)
-            self._extend_port_dict_security_group(context, port_db_entry)
-            fixed_ip = port_db_entry['fixed_ips'][0]['ip_address']
+        port_db_entry = None
+        with PORT_ALLOC_SEM:
+            session = context.session
+            with session.begin(subtransactions=True):
+                port_db_entry = super(MidonetPluginV2,
+                                      self).create_port(context, port)
+                self._extend_port_dict_security_group(context, port_db_entry)
+                fixed_ip = port_db_entry['fixed_ips'][0]['ip_address']
+
+        if port_db_entry:
             if is_compute_interface:
                 # Create a DHCP entry if needed.
                 if 'ip_address' in (port_db_entry['fixed_ips'] or [{}])[0]:
@@ -487,27 +493,28 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         if l3_port_check:
             self.prevent_l3_port_deletion(context, id)
 
-        session = context.session
-        with session.begin(subtransactions=True):
-            port_db_entry = super(MidonetPluginV2, self).get_port(context,
-                                                                  id, None)
-            bridge = self.mido_api.get_bridge(port_db_entry['network_id'])
-            # Clean up dhcp host entry if needed.
-            if 'ip_address' in (port_db_entry['fixed_ips'] or [{}])[0]:
-                # get ip and mac from DB record.
-                ip = port_db_entry['fixed_ips'][0]['ip_address']
-                mac = port_db_entry['mac_address']
+        with PORT_ALLOC_SEM:
+            session = context.session
+            with session.begin(subtransactions=True):
+                port_db_entry = super(MidonetPluginV2, self).get_port(context,
+                                                                      id, None)
+                bridge = self.mido_api.get_bridge(port_db_entry['network_id'])
+                # Clean up dhcp host entry if needed.
+                if 'ip_address' in (port_db_entry['fixed_ips'] or [{}])[0]:
+                    # get ip and mac from DB record.
+                    ip = port_db_entry['fixed_ips'][0]['ip_address']
+                    mac = port_db_entry['mac_address']
 
-                # create dhcp host entry under the bridge.
-                dhcp_subnets = bridge.get_dhcp_subnets()
-                if dhcp_subnets:
-                    for dh in dhcp_subnets[0].get_dhcp_hosts():
-                        if dh.get_mac_addr() == mac and dh.get_ip_addr() == ip:
-                            dh.delete()
+                    # create dhcp host entry under the bridge.
+                    dhcp_subnets = bridge.get_dhcp_subnets()
+                    if dhcp_subnets:
+                        for dh in dhcp_subnets[0].get_dhcp_hosts():
+                            if dh.get_mac_addr() == mac and dh.get_ip_addr() == ip:
+                                dh.delete()
 
-            result = super(MidonetPluginV2, self).delete_port(context, id)
-            self.mido_api.get_port(id).delete()
-            return result
+                result = super(MidonetPluginV2, self).delete_port(context, id)
+                self.mido_api.get_port(id).delete()
+                return result
 
     #
     # L3 APIs.
