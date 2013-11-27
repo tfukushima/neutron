@@ -360,6 +360,22 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         LOG.debug(_("MidonetPluginV2.get_network exiting: qnet=%r"), qnet)
         return self._fields(qnet, fields)
 
+    def get_networks(self, context, filters=None, fields=None):
+        """List quantum networks and verify that all exist in MidoNet."""
+        LOG.debug(_("MidonetPluginV2.get_networks called: "
+                    "filters=%(filters)r, fields=%(fields)r"),
+                  {'filters': filters, 'fields': fields})
+
+        # NOTE: Get network data with all fields (fields=None) for
+        #       _extend_network_dict_l3() method, which needs 'id' field
+        qnets = super(MidonetPluginV2, self).get_networks(context, filters,
+                                                          None)
+        self.mido_api.get_bridges({'tenant_id': context.tenant_id})
+        for n in qnets:
+            self._extend_network_dict_l3(context, n)
+
+        return [self._fields(net, fields) for net in qnets]
+
     def delete_network(self, context, id):
         """Delete a network and its corresponding MidoNet bridge."""
         LOG.debug(_("MidonetPluginV2.delete_network called: id=%r"), id)
