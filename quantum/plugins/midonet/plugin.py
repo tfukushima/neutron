@@ -298,6 +298,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
         tenant_id = self._get_tenant_id_for_create(context, network['network'])
 
+        self._ensure_default_security_group(context, tenant_id)
         if not network['network']['name']:
             network['network']['name'] = str(uuid.uuid4())
 
@@ -379,6 +380,7 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
         self.mido_api.get_bridges({'tenant_id': context.tenant_id})
         for n in qnets:
             self._extend_network_dict_l3(context, n)
+
         return [self._fields(net, fields) for net in qnets]
 
     def delete_network(self, context, id):
@@ -424,7 +426,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             # set midonet port id to quantum port id and create a DB record.
             port_data['id'] = bridge_port.get_id()
 
-
         port_db_entry = None
         fixed_ip = None
         with PORT_ALLOC_SEM:
@@ -442,7 +443,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             if is_compute_interface:
                 # Create a DHCP entry if needed.
                 if fixed_ip is not None:
-
                     # get ip and mac from DB record, assuming one IP address
                     # at most since we only support one subnet per network now.
                     mac = port_db_entry['mac_address']
