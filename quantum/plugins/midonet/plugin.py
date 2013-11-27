@@ -423,18 +423,22 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
             port_data['id'] = bridge_port.get_id()
 
         port_db_entry = None
+        fixed_ip = None
         with PORT_ALLOC_SEM:
             session = context.session
             with session.begin(subtransactions=True):
                 port_db_entry = super(MidonetPluginV2,
                                       self).create_port(context, port)
                 self._extend_port_dict_security_group(context, port_db_entry)
-                fixed_ip = port_db_entry['fixed_ips'][0]['ip_address']
+                fixed_ips = port_db_entry['fixed_ips']
+                if (fixed_ips is not None and len(fixed_ips) > 0 and
+                        'ip_address' in fixed_ips[0]):
+                    fixed_ip = fixed_ips[0]['ip_address']
 
         if port_db_entry:
             if is_compute_interface:
                 # Create a DHCP entry if needed.
-                if 'ip_address' in (port_db_entry['fixed_ips'] or [{}])[0]:
+                if fixed_ip is not None:
                     # get ip and mac from DB record, assuming one IP address
                     # at most since we only support one subnet per network now.
                     mac = port_db_entry['mac_address']
