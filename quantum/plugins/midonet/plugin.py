@@ -890,13 +890,14 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                    'external_port': external_port})
 
         session = context.session
+        router_id = floatingip_db['router_id']
+        tenant_id = fip['tenant_id']
+        floating_address = floatingip_db['floating_ip_address']
+        id = floatingip_db['id']
         with session.begin(subtransactions=True):
             super(MidonetPluginV2, self)._update_fip_assoc(context, fip, 
                 floatingip_db, external_port)
 
-            tenant_id = fip['tenant_id']
-            floating_address = floatingip_db['floating_ip_address']
-            id = floatingip_db['id']
 
             if 'port_id' in fip and fip['port_id']:
                 port_id, internal_ip_address, router_id = self.get_assoc_data(
@@ -955,7 +956,6 @@ class MidonetPluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
             # disassociate floating IP
             elif 'port_id' in fip and fip['port_id'] is None:
-                router_id = floatingip_db['router_id']
                 if not router_id:
                     return
 
