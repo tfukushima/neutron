@@ -388,6 +388,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
 
+    @utils.synchronized('subnet-criticail-section', external=True)
     def create_subnet(self, context, subnet):
         """Create Neutron subnet.
 
@@ -428,6 +429,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   sn_entry)
         return sn_entry
 
+    @utils.synchronized('subnet-criticail-section', external=True)
     def delete_subnet(self, context, id):
         """Delete Neutron subnet.
 
