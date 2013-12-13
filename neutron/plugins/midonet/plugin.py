@@ -455,6 +455,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
 
+    @utils.synchronized('network-criticail-section', external=True)
     def create_network(self, context, network):
         """Create Neutron network.
 
@@ -478,6 +479,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("MidonetPluginV2.create_network exiting: net=%r"), net)
         return net
 
+    @utils.synchronized('network-criticail-section', external=True)
     def update_network(self, context, id, network):
         """Update Neutron network.
 
@@ -509,6 +511,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("MidonetPluginV2.get_network exiting: qnet=%r"), qnet)
         return qnet
 
+    @utils.synchronized('network-criticail-section', external=True)
     def delete_network(self, context, id):
         """Delete a network and its corresponding MidoNet bridge."""
         LOG.debug(_("MidonetPluginV2.delete_network called: id=%r"), id)
