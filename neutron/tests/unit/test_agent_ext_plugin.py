@@ -44,6 +44,7 @@ DHCP_HOSTC = 'hostc'
 DHCP_HOST1 = 'host1'
 LBAAS_HOSTA = 'hosta'
 LBAAS_HOSTB = 'hostb'
+DR_HOST = 'hostdr'
 
 
 class AgentTestExtensionManager(object):
@@ -176,6 +177,20 @@ class AgentDBTestMixIn(object):
         callback = agents_db.AgentExtRpcCallback()
         callback.report_state(self.adminContext,
                               agent_state={'agent_state': l3},
+                              time=timeutils.strtime())
+
+    def _register_one_dr_agent(self, host=DR_HOST):
+
+        dr = {
+            'agent_type': constants.AGENT_TYPE_DYNAMIC_ROUTING,
+            'binary': 'neutron-dr-agent',
+            'configurations': {},
+            'host': host,
+            'topic': topics.DR_AGENT,
+            'start_flag': True}
+        callback = agents_db.AgentExtRpcCallback()
+        callback.report_state(self.adminContext,
+                              agent_state={'agent_state': dr},
                               time=timeutils.strtime())
 
 
