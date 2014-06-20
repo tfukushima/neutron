@@ -132,5 +132,7 @@
 
     "get_service_provider": "rule:regular_user",
     "get_lsn": "rule:admin_only",
-    "create_lsn": "rule:admin_only"
+    "create_lsn": "rule:admin_only",
+
+    "get_routingpeers": "rule:admin_only"
 }

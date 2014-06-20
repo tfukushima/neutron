@@ -414,12 +414,12 @@ class ExtensionManager(object):
         for ext in self.extensions.itervalues():
             try:
                 resources.extend(ext.get_resources())
-            except AttributeError:
+            except AttributeError as e:
                 # NOTE(dprince): Extension aren't required to have resource
                 # extensions
                 pass
         return resources
-
+    
     def get_actions(self):
         """Returns a list of ActionExtension objects."""
         actions = []
@@ -542,6 +542,7 @@ class ExtensionManager(object):
         # Neutron Servers
         for f in sorted(os.listdir(path)):
             try:
+                # import ipdb; ipdb.set_trace()
                 LOG.debug(_('Loading extension file: %s'), f)
                 mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
                 ext_path = os.path.join(path, f)
