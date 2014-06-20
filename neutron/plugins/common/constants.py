@@ -21,21 +21,25 @@ FIREWALL = "FIREWALL"
 VPN = "VPN"
 METERING = "METERING"
 L3_ROUTER_NAT = "L3_ROUTER_NAT"
+DYNAMIC_ROUTING = "DYNAMIC_ROUTING"
+DR_AGENT_SCHEDULER = "DYNAMIC ROUTING AGENT SCHEDULER"
 
 
-#maps extension alias to service type
+# maps extension alias to service type
 EXT_TO_SERVICE_MAPPING = {
     'dummy': DUMMY,
     'lbaas': LOADBALANCER,
     'fwaas': FIREWALL,
     'vpnaas': VPN,
     'metering': METERING,
-    'router': L3_ROUTER_NAT
+    'router': L3_ROUTER_NAT,
+    'dynamic_routing': DYNAMIC_ROUTING,
+    'dynamic_routing_agent_scheduler': DR_AGENT_SCHEDULER
 }
 
 # TODO(salvatore-orlando): Move these (or derive them) from conf file
 ALLOWED_SERVICES = [CORE, DUMMY, LOADBALANCER, FIREWALL, VPN, METERING,
-                    L3_ROUTER_NAT]
+                    L3_ROUTER_NAT, DYNAMIC_ROUTING]
 
 COMMON_PREFIXES = {
     CORE: "",
@@ -45,6 +49,7 @@ COMMON_PREFIXES = {
     VPN: "/vpn",
     METERING: "/metering",
     L3_ROUTER_NAT: "",
+    DYNAMIC_ROUTING: ""
 }
 
 # Service operation status constants

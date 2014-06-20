@@ -76,6 +76,7 @@ TYPE_LIST = "list"
 TYPE_DICT = "dict"
 
 AGENT_TYPE_DHCP = 'DHCP agent'
+AGENT_TYPE_DYNAMIC_ROUTING = 'Dynamic routing agent'
 AGENT_TYPE_OVS = 'Open vSwitch agent'
 AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
 AGENT_TYPE_HYPERV = 'HyperV agent'
@@ -100,6 +101,7 @@ L3_AGENT_SCHEDULER_EXT_ALIAS = 'l3_agent_scheduler'
 DHCP_AGENT_SCHEDULER_EXT_ALIAS = 'dhcp_agent_scheduler'
 LBAAS_AGENT_SCHEDULER_EXT_ALIAS = 'lbaas_agent_scheduler'
 L3_DISTRIBUTED_EXT_ALIAS = 'dvr'
+DR_AGENT_SCHEDULER_EXT_ALIAS = 'dynamic_routing_agent_scheduler'
 
 # Protocol names and numbers for Security Groups/Firewalls
 PROTO_NAME_TCP = 'tcp'
