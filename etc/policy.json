@@ -136,5 +136,26 @@
 
     "get_service_provider": "rule:regular_user",
     "get_lsn": "rule:admin_only",
-    "create_lsn": "rule:admin_only"
+    "create_lsn": "rule:admin_only",
+
+    "get_routingpeer": "rule:admin_only",
+    "create_routingpeer": "rule:admin_only",
+    "update_routingpeer": "rule:admin_only",
+    "delete_routingpeer": "rule:admin_only",
+    "get_routinginstance": "rule:admin_only",
+    "create_routinginstance": "rule:admin_only",
+    "update_routinginstance": "rule:admin_only",
+    "delete_routinginstance": "rule:admin_only",
+    "add_network_to_routinginstance": "rule:admin_only",
+    "remove_network_from_routinginstance": "rule:admin_only",
+    "list_networks_on_routinginstance": "rule:admin_only",
+
+    "list_peers_on_dr_agent": "rule:admin_only",
+    "add_routingpeer_to_dr_agent": "rule:admin_only",
+    "remove_routingpeer_from_dr_agent": "rule:admin_only",
+    "list_dr_agent_hosting_peer": "rule:admin_only",
+    "list_agents_on_routinginstance": "rule:admin_only",
+    "add_agent_to_routinginstance": "rule:admin_only",
+    "remove_agent_from_routinginstance": "rule:admin_only"
+
 }
