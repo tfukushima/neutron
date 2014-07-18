@@ -39,21 +39,26 @@ class InvalidDRAgent(agent.AgentNotFound):
     message = _("Agent %(id)s is not a Dynamic Routing Agent or has been"
                 " disabled.")
 
+
 class RoutingPeerAgentBinding(exceptions.Conflict):
     message = _("The routing peer %(routingpeer_id)s has been already hosted"
                 " by the Dynamic Routing Agent %(agent_id)s.")
+
 
 class RoutingPeerSchedulingFailed(exceptions.Conflict):
     message = _("Failed scheduling routingpeer %(routingpeer_id)s to"
                 " the Dynamic Routing Agent %(agent_id)s.")
 
+
 class RoutingPeerNotHosted(exceptions.Conflict):
     message = _("The routing peer %(routingpeer_id)s is not hosted "
                 "by the Dynamic Routing Agent %(agent_id)s.")
 
+
 class RoutingPeerHostedByDRAgent(exceptions.Conflict):
     message = _("The routing peer %(routingpeer_id)s is already hosted "
                 "by the Dynamic Routing Agent %(agent_id)s.")
+
 
 class RoutingPeerSchedulerController(wsgi.Controller):
     """Schedule peers for Dyanmic Routing agents"""
@@ -151,8 +156,8 @@ class Dr_agentscheduler(extensions.ExtensionDescriptor):
         parent = dict(member_name="routingpeer",
                       collection_name="routingpeers")
 
-        controller = resource.Resource(DynamicRoutingAgentsHostingPeerController(),
-                                       base.FAULT_MAP)
+        controller = resource.Resource(
+            DynamicRoutingAgentsHostingPeerController(), base.FAULT_MAP)
         exts.append(extensions.ResourceExtension(
             DR_AGENTS, controller, parent))
         return exts

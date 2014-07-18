@@ -37,7 +37,6 @@ LOG = logging.getLogger(__name__)
 class DRAgentCallbackMixin(object):
     """Agent side of the Dynamic Routing rpc API."""
 
-
     def __init__(self, topic, context):
         super(DRAgentPluginApi,
               self).__init__(topic=topic,
@@ -62,12 +61,12 @@ class DRAgent(manager.Manager):
         self.context = context.get_admin_context_without_session()
 
     def add_routingpeer(self, context, payload):
-        #TODO(tfukushima): implement this call using the Ryu's BGP speaker
+        # TODO(tfukushima): implement this call using the Ryu's BGP speaker
         #                  driver
         pass
- 
+
     def remove_routingpeer(self, context, payload):
-        #TODO(tfukushima): implement this call using the Ryu's BGP speaker
+        # TODO(tfukushima): implement this call using the Ryu's BGP speaker
         #                  driver
         pass
 

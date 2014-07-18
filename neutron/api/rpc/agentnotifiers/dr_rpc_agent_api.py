@@ -18,13 +18,14 @@ from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
+
 class DynamicRoutingAgentNotifyAPI(n_rpc.RpcProxy):
     """API for plugin to notify DR agent"""
     BASE_RPC_API_VERSION = '1.0'
 
     def __init__(self, topic=topics.DR_AGENT):
         super(DynamicRoutingAgentNotifyAPI, self).__init__(
-              topic=topic, default_version=self.BASE_RPC_API_VERSION)
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
 
     def _notification_host(self, context, method, payload, host):
         """Notify the agent that is hosting the peer."""

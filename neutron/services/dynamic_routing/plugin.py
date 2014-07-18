@@ -15,8 +15,8 @@
 from neutron.plugins.common import constants
 from neutron.db import dynamicrouting_db
 
-class DynamicRoutingPlugin(dynamicrouting_db.DynamicRoutingDbMixin):
 
+class DynamicRoutingPlugin(dynamicrouting_db.DynamicRoutingDbMixin):
     supported_extension_aliases = ["dynamic_routing",
                                    "dynamic_routing_agent_scheduler"]
 

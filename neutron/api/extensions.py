@@ -419,7 +419,7 @@ class ExtensionManager(object):
                 # extensions
                 pass
         return resources
-    
+
     def get_actions(self):
         """Returns a list of ActionExtension objects."""
         actions = []

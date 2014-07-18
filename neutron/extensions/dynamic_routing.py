@@ -38,12 +38,12 @@ RESOURCE_ATTRIBUTE_MAP = {
                'validate': {'type:uuid': None},
                'is_visible': True, 'primary_key': True},
         'peer': {'allow_post': True, 'allow_put': False,
-                 'validate': {'type:string': None },
+                 'validate': {'type:string': None},
                  'is_visible': True, 'default': None,
                  'required_by_policy': False,
                  'enforce_policy': False},
         'protocol': {'allow_post': True, 'allow_put': False,
-                     'validate': {'type:string': None },
+                     'validate': {'type:string': None},
                      'is_visible': True, 'default': None,
                      'required_by_policy': False,
                      'enforce_policy': False},
@@ -58,12 +58,12 @@ RESOURCE_ATTRIBUTE_MAP = {
     },
     'routinginstances': {
         'id': {'allow_post': False, 'allow_put': False,
-               'validate': {'type:uuid': None },
+               'validate': {'type:uuid': None},
                'is_visible': True,
                'required_by_policy': False,
                'enforce_policy': False},
         'nexthop': {'allow_post': True, 'allow_put': True,
-                    'validate': {'type:string': None },
+                    'validate': {'type:string': None},
                     'is_visible': True, 'default': '',
                     'required_by_policy': False,
                     'enforce_policy': False},
@@ -72,12 +72,12 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'required_by_policy': True,
                       'is_visible': True},
         'discover': {'allow_post': True, 'allow_put': True,
-                     'validate': {'type:boolean': None },
+                     'validate': {'type:boolean': None},
                      'is_visible': True, 'default': False,
                      'required_by_policy': False,
                      'enforce_policy': False},
         'advertise': {'allow_post': True, 'allow_put': True,
-                      'validate': {'type:boolean': None },
+                      'validate': {'type:boolean': None},
                       'is_visible': True, 'default': False,
                       'required_by_policy': False,
                       'enforce_policy': False},
@@ -99,13 +99,16 @@ class NetworkAlreadyAssociated(exceptions.Conflict):
     message = _("Network %(network_id)s already associated to routing "
                 "instance %(routinginstance_id)s.")
 
+
 class RoutingInstanceNetNotHosted(exceptions.NotFound):
     message = _("The network %(network_id)s not associated to "
                 "routing instance %(ri_id)s.")
- 
+
+
 class RoutingInstanceAgentNotHosted(exceptions.NotFound):
     message = _("The agent %(agent_id)s not associated to "
                 "routing instance %(ri_id)s.")
+
 
 class RoutingInstanceNetworksController(wsgi.Controller):
     def get_plugin(self):
@@ -120,9 +123,10 @@ class RoutingInstanceNetworksController(wsgi.Controller):
     def index(self, request, **kwargs):
         plugin = manager.NeutronManager.get_service_plugins().get(
             constants.DYNAMIC_ROUTING)
-        policy.enforce(request.context, "list_networks_on_routing_instance", {})
-        return plugin.list_networks_on_routinginstance(request.context,
-                                                       kwargs['routinginstance_id'])
+        policy.enforce(
+            request.context, "list_networks_on_routing_instance", {})
+        return plugin.list_networks_on_routinginstance(
+            request.context, kwargs['routinginstance_id'])
 
     def create(self, request, body, **kwargs):
         plugin = self.get_plugin()
@@ -134,7 +138,8 @@ class RoutingInstanceNetworksController(wsgi.Controller):
 
     def delete(self, request, id, **kwargs):
         plugin = self.get_plugin()
-        policy.enforce(request.context, "remove_network_from_routinginstance", {})
+        policy.enforce(
+            request.context, "remove_network_from_routinginstance", {})
         return plugin.remove_network_from_routinginstance(
             request.context, kwargs['routinginstance_id'], id)
 
@@ -153,8 +158,8 @@ class RoutingInstanceAgentsController(wsgi.Controller):
         plugin = manager.NeutronManager.get_service_plugins().get(
             constants.DYNAMIC_ROUTING)
         policy.enforce(request.context, "list_agents_on_routing_instance", {})
-        return plugin.list_agents_on_routinginstance(request.context,
-                                                     kwargs['routinginstance_id'])
+        return plugin.list_agents_on_routinginstance(
+            request.context, kwargs['routinginstance_id'])
 
     def create(self, request, body, **kwargs):
         plugin = self.get_plugin()
@@ -166,7 +171,8 @@ class RoutingInstanceAgentsController(wsgi.Controller):
 
     def delete(self, request, id, **kwargs):
         plugin = self.get_plugin()
-        policy.enforce(request.context, "remove_agent_from_routinginstance", {})
+        policy.enforce(
+            request.context, "remove_agent_from_routinginstance", {})
         return plugin.remove_agent_from_routinginstance(
             request.context, kwargs['routinginstance_id'], id)
 
@@ -284,7 +290,7 @@ class DynamicRoutingPluginBase(service_base.ServicePluginBase):
 
     @abc.abstractmethod
     def add_network_to_routinginstance(self, context, routinginstance_id,
-            network_id):
+                                       network_id):
         pass
 
     @abc.abstractmethod
@@ -298,7 +304,7 @@ class DynamicRoutingPluginBase(service_base.ServicePluginBase):
 
     @abc.abstractmethod
     def add_agent_to_routinginstance(self, context, routinginstance_id,
-            agent_id):
+                                     agent_id):
         pass
 
     @abc.abstractmethod

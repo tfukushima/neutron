@@ -24,7 +24,7 @@ L3_ROUTER_NAT = "L3_ROUTER_NAT"
 DYNAMIC_ROUTING = "DYNAMIC_ROUTING"
 
 
-#maps extension alias to service type
+# maps extension alias to service type
 EXT_TO_SERVICE_MAPPING = {
     'dummy': DUMMY,
     'lbaas': LOADBALANCER,

@@ -55,6 +55,7 @@ class RoutingPeerAgentBinding(model_base.BASEV2, models_v2.HasId):
                          sa.ForeignKey("agents.id",
                                        ondelete='RESTRICT'))
 
+
 class RoutingInstance(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """ Represents a routing instance."""
 
@@ -75,6 +76,7 @@ class RoutingInstanceNetBinding(model_base.BASEV2, models_v2.HasId):
                            sa.ForeignKey("networks.id",
                                          ondelete='RESTRICT'))
 
+
 class RoutingInstanceAgentBinding(model_base.BASEV2, models_v2.HasId):
     """Binding between routing instance and agents"""
     routinginstance_id = sa.Column(sa.String(36),
@@ -90,8 +92,6 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
                             dr.DynamicRoutingPluginBase,
                             dr_as.RoutingPeerSchedulerPluginBase,
                             base_db.NeutronDbPluginV2):
-
-
     """docstring for DynamicRouting_db_mixin"""
     def __init__(self):
         super(DynamicRoutingDbMixin, self).__init__()
@@ -99,7 +99,8 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
     @property
     def dr_rpc_notifier(self):
         if not hasattr(self, '_dr_rpc_notifier'):
-            self._dr_rpc_notifier = dr_rpc_agent_api.DynamicRoutingAgentNotifyAPI()
+            self._dr_rpc_notifier = \
+                dr_rpc_agent_api.DynamicRoutingAgentNotifyAPI()
         return self._dr_rpc_notifier
 
     def create_routingpeer(self, context, routingpeer):
@@ -114,9 +115,7 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
             routingpeer_db = RoutingPeer(**res)
             context.session.add(routingpeer_db)
 
-
         return self._make_routingpeer_dict(routingpeer_db)
-
 
     def create_routinginstance(self, context, routinginstance):
         LOG.debug(_("create_routinginstance() called"))
@@ -139,7 +138,8 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
     def delete_routinginstance(self, context, routinginstance_id):
         LOG.debug(_("delete_routinginstance() called"))
         with context.session.begin(subtransactions=True):
-            routinginstance = self._get_routinginstance(context, routinginstance_id)
+            routinginstance = self._get_routinginstance(
+                context, routinginstance_id)
             context.session.delete(routinginstance)
 
     def get_routingpeers(self, context, filters=None, fields=None):
@@ -207,18 +207,18 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
         with context.session.begin(subtransactions=True):
             agent_db = self._get_agent(context, agent_id)
             if (agent_db['agent_type'] != constants.AGENT_TYPE_DYNAMIC_ROUTING
-                    or not agent_db['admin_state_up']): # or
+                    or not agent_db['admin_state_up']):  # or
                 # not self.get_l3_agent_candidates(router, [agent_db])):
                 raise dr_as.InvalidDRAgent(id=agent_id)
             query = context.session.query(RoutingPeerAgentBinding)
             query = query.filter(
-                    RoutingPeerAgentBinding.agent_id == agent_db.id,
-                    RoutingPeerAgentBinding.routingpeer_id == routingpeer_id)
+                RoutingPeerAgentBinding.agent_id == agent_db.id,
+                RoutingPeerAgentBinding.routingpeer_id == routingpeer_id)
 
             try:
                 binding = query.one()
-                raise dr_as.RoutingPeerHostedByDRAgent(routingpeer_id=routingpeer_id,
-                                                       agent_id=binding.agent_id)
+                raise dr_as.RoutingPeerHostedByDRAgent(
+                    routingpeer_id=routingpeer_id, agent_id=binding.agent_id)
             except exc.NoResultFound:
                 pass
 
@@ -232,20 +232,20 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
                        'agent_id': agent_db.id})
 
         routingpeer_dict = self._make_routingpeer_dict(routingpeer)
-        self.dr_rpc_notifier.add_routingpeer(context, routingpeer_dict, agent_db.host)
+        self.dr_rpc_notifier.add_routingpeer(
+            context, routingpeer_dict, agent_db.host)
 
     def add_network_to_routinginstance(self, context, routinginstance_id,
                                        network_id):
         """Associate a network to a routing instance."""
         with context.session.begin(subtransactions=True):
             routinginstance = self._get_routinginstance(
-                    context,
-                    routinginstance_id)
+                context, routinginstance_id)
             query = context.session.query(RoutingInstanceNetBinding)
             query = query.filter(
-                    RoutingInstanceNetBinding.routinginstance_id ==
-                    routinginstance_id,
-                    RoutingInstanceNetBinding.network_id == network_id)
+                (RoutingInstanceNetBinding.routinginstance_id ==
+                 routinginstance_id),
+                RoutingInstanceNetBinding.network_id == network_id)
 
             try:
                 binding = query.one()
@@ -269,13 +269,12 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
         """Associate a agent to a routing instance."""
         with context.session.begin(subtransactions=True):
             routinginstance = self._get_routinginstance(
-                    context,
-                    routinginstance_id)
+                context, routinginstance_id)
             query = context.session.query(RoutingInstanceAgentBinding)
             query = query.filter(
-                    RoutingInstanceAgentBinding.routinginstance_id ==
-                    routinginstance_id,
-                    RoutingInstanceAgentBinding.agent_id == agent_id)
+                (RoutingInstanceAgentBinding.routinginstance_id ==
+                 routinginstance_id),
+                RoutingInstanceAgentBinding.agent_id == agent_id)
 
             try:
                 binding = query.one()
@@ -300,8 +299,8 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
             agent_db = self._get_agent(context, agent_id)
             query = context.session.query(RoutingPeerAgentBinding)
             query = query.filter(
-                    RoutingPeerAgentBinding.agent_id == agent_db.id,
-                    RoutingPeerAgentBinding.routingpeer_id == routingpeer_id)
+                RoutingPeerAgentBinding.agent_id == agent_db.id,
+                RoutingPeerAgentBinding.routingpeer_id == routingpeer_id)
             try:
                 binding = query.one()
             except exc.NoResultFound:
@@ -319,14 +318,15 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
                 context, routinginstance_id)
             query = context.session.query(RoutingInstanceAgentBinding)
             query = query.filter(
-                    RoutingInstanceAgentBinding.routinginstance_id ==
-                    routinginstance_db.id,
-                    RoutingInstanceAgentBinding.agent_id == agent_id)
+                (RoutingInstanceAgentBinding.routinginstance_id ==
+                 routinginstance_db.id),
+                RoutingInstanceAgentBinding.agent_id == agent_id)
             try:
                 binding = query.one()
             except exc.NoResultFound:
-                raise dr.RoutingInstanceAgentNotHosted(ri_id=routinginstance_id,
-                                                       agent_id=agent_id)
+                raise dr.RoutingInstanceAgentNotHosted(
+                    ri_id=routinginstance_id, agent_id=agent_id)
+
             context.session.delete(binding)
 
     def remove_network_from_routinginstance(self, context, routinginstance_id,
@@ -337,9 +337,9 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
                 context, routinginstance_id)
             query = context.session.query(RoutingInstanceNetBinding)
             query = query.filter(
-                    RoutingInstanceNetBinding.routinginstance_id ==
-                    routinginstance_db.id,
-                    RoutingInstanceNetBinding.network_id == network_id)
+                (RoutingInstanceNetBinding.routinginstance_id ==
+                 routinginstance_db.id),
+                RoutingInstanceNetBinding.network_id == network_id)
             try:
                 binding = query.one()
             except exc.NoResultFound:
@@ -358,8 +358,8 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
     def list_networks_on_routinginstance(self, context, routinginstance_id):
         LOG.debug(_("list_networks_on_routinginstance() called"))
         query = context.session.query(RoutingInstanceNetBinding.network_id)
-        query = query.filter(RoutingInstanceNetBinding.routinginstance_id ==
-                routinginstance_id)
+        query = query.filter(
+            RoutingInstanceNetBinding.routinginstance_id == routinginstance_id)
 
         network_ids = [item[0] for item in query]
         if network_ids:
@@ -371,8 +371,8 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
     def list_agents_on_routinginstance(self, context, routinginstance_id):
         LOG.debug(_("list_agents_on_routinginstance() called"))
         query = context.session.query(RoutingInstanceAgentBinding.agent_id)
-        query = query.filter(RoutingInstanceNetBinding.routinginstance_id ==
-                routinginstance_id)
+        query = query.filter(
+            RoutingInstanceNetBinding.routinginstance_id == routinginstance_id)
 
         agent_ids = [item[0] for item in query]
         if agent_ids:
@@ -407,10 +407,10 @@ class DynamicRoutingDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
 
     def _make_routinginstance_dict(self, routinginstance, fields=None):
         attr = dr.RESOURCE_ATTRIBUTE_MAP.get('routinginstances')
-        res = { k: routinginstance[k] for k in attr }
+        res = {k: routinginstance[k] for k in attr}
         return res
 
     def _make_routingpeer_dict(self, routingpeer, fields=None):
         attr = dr.RESOURCE_ATTRIBUTE_MAP.get('routingpeers')
-        res = { k: routingpeer[k] for k in attr }
+        res = {k: routingpeer[k] for k in attr}
         return res

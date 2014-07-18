@@ -11,7 +11,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import mock 
+import mock
 from webob import exc
 
 from neutron.extensions import dynamic_routing
@@ -22,6 +22,7 @@ from neutron.tests.unit import test_api_v2_extension
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_api_v2._get_path
+
 
 class DynamicRoutingExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
 
@@ -67,12 +68,13 @@ class DynamicRoutingExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         instance = self.plugin.return_value
         instance.get_routingpeer.return_value = return_value
 
-        res = self.api.get(_get_path('routingpeers/{0}'.format(routingpeer_id)))
+        res = self.api.get(
+            _get_path('routingpeers/{0}'.format(routingpeer_id)))
         self.assertEqual(res.status_int, exc.HTTPOk.code)
 
-        instance.get_routingpeer.assert_called_with(mock.ANY,
-                                                    unicode(routingpeer_id),
-                                                    fields=mock.ANY)
+        instance.get_routingpeer.assert_called_with(
+            mock.ANY, unicode(routingpeer_id), fields=mock.ANY)
+
 
 class DynamicRoutingExtensionTestCaseXML(DynamicRoutingExtensionTestCase):
     fmt = 'xml'
