@@ -16,14 +16,14 @@
 """add dynamic routing model data
 
 Revision ID: 15be73214821
-Revises: db_healing
+Revises: 5589aa32bf80
 Create Date: 2014-07-02 13:16:08.604175
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '15be73214821'
-down_revision = '2026156eab2f'
+down_revision = '5589aa32bf80'
 
 # Change to ['*'] if this migration applies to all plugins
 migration_for_plugins = ['*']
