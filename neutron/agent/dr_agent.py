@@ -13,9 +13,11 @@
 #    under the License.
 #
 # @author: Jaume Devesa, devvesa@gmail.com, Midokura SARL
+import socket
 import sys
 
 from oslo.config import cfg
+from ryu.services.protocols.bgp.bgpspeaker import BGPSpeaker
 
 from neutron.agent.common import config
 from neutron.agent.linux import external_process
@@ -67,6 +69,10 @@ class DRAgentPluginApi(n_rpc.RpcProxy):
                           topic=self.topic)
 
 
+def dump_remote_best_path_change(event):
+    print 'the best path changed:', event.remote_as, event.prefix,\
+        event.nexthop, event.is_withdraw
+
 
 class DRAgent(manager.Manager):
     """Manager for Dynamic Routing. """
@@ -80,17 +86,33 @@ class DRAgent(manager.Manager):
         self.fullsync = True
         self.peers = set()
         self.advertise_networks = set()
+        self.bgp_speaker = BGPSpeaker(
+            # as_number=cfg.CONF.local_as_number,
+            as_number=12345,
+            # FIXME(tfukushima): It's better to use Neutron API here.
+            router_id=socket.gethostbyname(socket.gethostname()),
+            best_path_change_handler=dump_remote_best_path_change)
         super(DRAgent, self).__init__()
 
     def add_routingpeer(self, context, payload):
-        #TODO(tfukushima): implement this call using the Ryu's BGP speaker
-        #                  driver
-        pass
- 
+        # TODO(tfukushima): implement this call using the Ryu's BGP speaker
+        #                   driver
+        peer_id = payload.peer
+        peer_as = payload.remote_as
+        self.bgp_speaker.neighbor_add(peer_id, peer_as)
+        self.peers.add(peer_id)
+        # TODO(tfukushima): Get the advertised networks and add them to
+        #                   `self.advertise_networks`.
+
     def remove_routingpeer(self, context, payload):
-        #TODO(tfukushima): implement this call using the Ryu's BGP speaker
-        #                  driver
-        pass
+        # TODO(tfukushima): implement this call using the Ryu's BGP speaker
+        #                   driver
+        peer_id = payload.peer
+        peer_as = payload.remote_as
+        self.bgp_speaker.neighbor_del(peer_id, peer_as)
+        self.peers.remove(peer_id)
+        # TODO(tfukushima): Get the advertised networks and remove them from
+        #                   `self.advertise_networks`.
 
     @periodic_task.periodic_task
     def periodic_sync_peers_task(self, context):
@@ -109,7 +131,9 @@ class DRAgent(manager.Manager):
         # self.peers and self.advertise_networks. For any doubt, please check
         # out the module neutron.agent.l3_agent. Is quite similar (but more
         # complex) that we want to do.
-        
+        self.peers.update(peers)
+        self.networks.update(networks)
+
 
 class DRAgentWithStateReport(DRAgent):
 
