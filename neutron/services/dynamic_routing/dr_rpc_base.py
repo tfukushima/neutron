@@ -23,7 +23,7 @@ LOG = logging.getLogger(__name__)
 
 
 class DynamicRoutingRpcCallbackMixin(object):
-    """A mix-in that enable DR agent rpc support. """
+    """A mix-in that enable DR agent rpc support."""
 
     def sync_routingpeers(self, context, **kwargs):
         host = kwargs.get('host')
@@ -63,6 +63,11 @@ class DynamicRoutingRpcCallbackMixin(object):
                    'advertise': [True]}
         routinginstances = dr_plugin.get_routinginstances(context,
                                                           filters=filters)
+        if routinginstances:
+            networks = dr_plugin.list_networks_on_routinginstance(
+                context, routinginstances[0]['id'])['networks']
+        else:
+            networks = []
         subnets = []
 
         if routinginstances:
