@@ -54,6 +54,7 @@ AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
 
 class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                         common_db_mixin.CommonDbMixin):
+
     """V2 Neutron plugin interface implementation using SQLAlchemy models.
 
     Whenever a non-read call happens the plugin will call an event handler
