@@ -136,8 +136,8 @@ class DRAgent(manager.Manager):
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = DRAgentPluginApi(topics.DRAGENT, host)
         self.fullsync = True
-        self.peers = set()
-        self.advertise_networks = set()
+        self.peers = {}
+        self.advertise_networks = {}
         self.driver = self.__class__.BGP_DRIVER_CLASS(
             cfg.CONF.local_as_number,
             cfg.CONF.router_id,
@@ -175,16 +175,27 @@ class DRAgent(manager.Manager):
                   self.fullsync)
         if not self.fullsync:
             return
-        # peers = self.plugin_rpc.get_peers(self.context)
-        # networks = self.plugin_rpc.get_advertisenetworks(self.context)
-        # TODO(tfukushina): Taku, this is a periodic task that will ask
-        # periodically the peers and the networks to advertise. You have to
-        # merge the obtainted values with the previous ones, saved into
-        # self.peers and self.advertise_networks. For any doubt, please check
-        # out the module neutron.agent.l3_agent. Is quite similar (but more
-        # complex) that we want to do.
-        # self.peers.update(peers)
-        # self.advertise_networks.update(networks)
+
+       def calculate_diff(current_dictionary, resources, key):
+            ids = map(lambda x: x[key], resources)
+            current_ids = current_dictionary.keys()
+            removed_resource_set = set(current_ids) - set(ids)
+            addeed_resource_set = set(ids) - set(current_ids)
+            updated_resource_set = set(current_ids) & set(ids)
+            dirty_resource_set = addeed_resource_set & updated_resource_set
+            for removed_resource in removed_resource_set:
+                removed_id = removed_resource[key]
+                del dictionary[removed_id]
+            for dirty_resource in dirty_resource_set:
+                dirty_id = dirty_resource[key]
+                dictionary[dirty_id] = dirty_resource
+
+        # Naive diff calculation for the peers.
+        peers = self.plugin_rpc.get_peers(self.context)
+        calculate_diff(self.peers, peers, 'peer')
+        # Naive diff calculation for the advertised networks.
+        subnets = self.plugin_rpc.get_advertisenetworks(self.context)
+        calculate_diff(self.advertise_networks, subnets, 'id')
 
 
 class DRAgentWithStateReport(DRAgent):
