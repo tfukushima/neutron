@@ -135,16 +135,16 @@ class DRAgent(manager.Manager):
                   self.fullsync)
         if not self.fullsync:
             return
-        # peers = self.plugin_rpc.get_peers(self.context)
-        # networks = self.plugin_rpc.get_advertisenetworks(self.context)
+        peers = self.plugin_rpc.get_peers(self.context)
+        networks = self.plugin_rpc.get_advertisenetworks(self.context)
         # TODO(tfukushina): Taku, this is a periodic task that will ask
         # periodically the peers and the networks to advertise. You have to
         # merge the obtainted values with the previous ones, saved into
         # self.peers and self.advertise_networks. For any doubt, please check
         # out the module neutron.agent.l3_agent. Is quite similar (but more
         # complex) that we want to do.
-        self.peers.update(peers)
-        self.advertise_networks.update(networks)
+        self.peers.update(*peers)
+        self.advertise_networks.update(*networks)
 
 
 class DRAgentWithStateReport(DRAgent):
