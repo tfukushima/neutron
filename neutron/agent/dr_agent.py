@@ -50,12 +50,46 @@ class DRAgentPluginApi(n_rpc.RpcProxy):
         self.host = host
 
     def get_peers(self, context):
+        """Get the peers connected with the dynamic routing protocol.
+
+        :param context: an instance of neutron.context.
+        :returns: a list of dictionaries of a routing peer like below:
+            [
+              {
+               'remote_as': 1324,
+               'tenant_id': '7a616a993a5848e8a46c2ab97e870c21',
+               'peer': '10.23.43.22',
+               'password': None,
+               'id': '9539ea6c-c773-49b7-957b-70c47d947ff4',
+               'extra_config': {}
+               },
+            ]
+        """
         return self.call(context,
                          self.make_msg('sync_routingpeers',
                                        host=self.host),
                          topic=self.topic)
 
     def get_advertisenetworks(self, context):
+        """Get the routes advertised from the peers connected with the dynamic
+        routing protocol.
+
+        :param context: an instance of neutron.context.
+        :returns: a list of dictionaries of a subnet like below:
+            [
+               {
+                'name': '',
+                'network_id': 'ed2e3c10-2e43-4297-9006-2863a2d1abbc',
+                'tenant_id': 'c1210485b2424d48804aad5d39c61b8f',
+                'allocation_pools': [{'start': '10.10.0.2', 'end': '10.10.0.254'}],
+                'gateway_ip': '10.10.0.1',
+                'ip_version': 4,
+                'cidr': '10.10.0.0/24',
+                'id': '4156c7a5-e8c4-4aff-a6e1-8f3c7bc83861',
+                'enable_dhcp': true
+               },
+            ]
+        """
         networks = self.call(context,
                              self.make_msg('sync_advertisenetworks',
                                            host=self.host),
